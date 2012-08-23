@@ -3,9 +3,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from mptt.forms import TreeNodeChoiceField
 
-from .app_settings import TEMPLATE_CHOICES, CONTENT_TEMPLATE_CHOICES
-from .models import Page, ContentItem
-from fiber.utils.urls import is_quoted_url
+from app_settings import TEMPLATE_CHOICES, CONTENT_TEMPLATE_CHOICES
+from models import Page, ContentItem
+from utils.urls import is_quoted_url
 
 
 class ContentItemAdminForm(forms.ModelForm):
@@ -21,16 +21,28 @@ class ContentItemAdminForm(forms.ModelForm):
 
 class PageForm(forms.ModelForm):
 
-    parent = TreeNodeChoiceField(queryset=Page.tree.all(), level_indicator=3 * unichr(160), empty_label='---------', required=False)
-    redirect_page = TreeNodeChoiceField(label=_('Redirect page'), queryset=Page.objects.filter(redirect_page__isnull=True), level_indicator=3 * unichr(160), empty_label='---------', required=False)
+    parent = TreeNodeChoiceField(label=_('Parent page'), 
+        queryset=Page.tree.all(), 
+        level_indicator=3*unichr(160), 
+        empty_label='---------', 
+        required=False)
+    redirect_page = TreeNodeChoiceField(label=_('Redirect page'), 
+        queryset=Page.objects.filter(redirect_page__isnull=True), 
+        level_indicator=3*unichr(160), 
+        empty_label='---------', 
+        required=False)
 
     class Meta:
         model = Page
 
     def __init__(self, *args, **kwargs):
         super(PageForm, self).__init__(*args, **kwargs)
+        print TEMPLATE_CHOICES
         if len(TEMPLATE_CHOICES) > 0:
-            self.fields['template_name'] = forms.ChoiceField(choices=TEMPLATE_CHOICES, required=False, label=_('Template'))
+            self.fields['template_name'] = forms.ChoiceField(
+                choices=TEMPLATE_CHOICES, 
+                required=False, 
+                label=_('Template'))
 
     def clean_title(self):
         """

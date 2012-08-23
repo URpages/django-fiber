@@ -1,8 +1,7 @@
 import re
 
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-
-from .models import Page
 
 
 class FiberPageMixin(object):
@@ -12,6 +11,7 @@ class FiberPageMixin(object):
     fiber_page_url = None
     fiber_page = None
     fiber_current_pages = None
+    fiber_site = None
 
     def get_context_data(self, **kwargs):
         context = super(FiberPageMixin, self).get_context_data(**kwargs)
@@ -28,7 +28,7 @@ class FiberPageMixin(object):
         return self.fiber_page_url
 
     def get_fiber_page(self):
-        return self.fiber_page or Page.objects.get_by_url(self.get_fiber_page_url())
+        return self.fiber_page or self.model.objects.get_by_url(self.get_fiber_page_url())
 
     def get_fiber_current_pages(self):
         if not self.fiber_current_pages:
@@ -50,7 +50,7 @@ class FiberPageMixin(object):
             check if one of the `mark_current_regexes` matches the requested URL.
             If so, add the page and all its ancestors to the current_pages list.
             """
-            current_page_candidates = Page.objects.exclude(mark_current_regexes__exact='')
+            current_page_candidates = self.model.objects.exclude(mark_current_regexes__exact='')
             url = self.get_fiber_page_url()
 
             for current_page_candidate in list(set(current_page_candidates) - set(self.fiber_current_pages)):

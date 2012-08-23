@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from .models import Page
+from models import Page, ContentItem
 
 
 def fiber_login(request):

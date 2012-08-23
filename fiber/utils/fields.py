@@ -4,9 +4,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from fiber import editor
 
-from . import form_fields
-from . import validators
-from .widgets import FiberTextarea
+from widgets import FiberTextarea
+import form_fields
+import validators
 
 
 class FiberURLField(models.CharField):

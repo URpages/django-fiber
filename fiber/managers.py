@@ -3,11 +3,12 @@ import re
 
 from django.db import models
 from django.utils.translation import ugettext, ugettext_lazy as _
+from django.conf import settings
 
 from mptt.managers import TreeManager
 
-from . import editor
-from .utils.urls import get_named_url_from_quoted_url
+from fiber import editor
+from fiber.utils.urls import get_named_url_from_quoted_url
 
 
 class ContentItemManager(models.Manager):
@@ -133,7 +134,8 @@ class PageManager(TreeManager):
         # We need to check against get_absolute_url(). Typically this will
         # recursively access .parent, so we retrieve the ancestors at the same time
         # for efficiency.
-        qs = self.get_query_set()
+        site_pk = getattr(settings, 'SITE_ID', None)
+        qs = self.get_query_set().filter(site=site_pk)
 
         # First check if there is a Page whose `url` matches the requested URL.
         try:
@@ -192,9 +194,10 @@ class PageManager(TreeManager):
         """
         data = []
         page_dict = dict()  # maps page id to page info
+        site_pk = getattr(settings, 'SITE_ID', None)
 
         # The queryset contains all pages in correct order
-        queryset = self.model.tree.get_query_set()
+        queryset = self.model.tree.get_query_set().filter(site=site_pk)
 
         for page in queryset:
             page_info = dict(

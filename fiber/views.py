@@ -2,21 +2,25 @@ from django.conf import settings
 from django.http import HttpResponsePermanentRedirect, Http404
 from django.views.generic.base import TemplateView
 
-from .app_settings import DEFAULT_TEMPLATE
-from .mixins import FiberPageMixin
+from . import app_settings
+from . import mixins
+from . import models
 
-
-class FiberTemplateView(FiberPageMixin, TemplateView):
+class FiberTemplateView(mixins.FiberPageMixin, TemplateView):
+    model = models.Page
 
     def get_fiber_page_url(self):
         return self.request.path_info
 
     def get_template_names(self):
-        if self.get_fiber_page() and self.get_fiber_page().template_name not in [None, '']:
-            return self.get_fiber_page().template_name
-        else:
-            return DEFAULT_TEMPLATE
+        page = self.get_fiber_page()
+        templates = []
+        if getattr(page.site, 'id'):
+            templates.append('sites/{0}/node-{1}.html'.format(page.site.id, page.id))
+        templates.append('default/node-{0}.html'.format(page.id))
+        templates.append('default/page.html')
 
+        return templates
     def render_to_response(self, *args, **kwargs):
         if self.get_fiber_page() == None:
             """

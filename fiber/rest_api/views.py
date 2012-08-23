@@ -7,15 +7,11 @@ from djangorestframework.views import ListOrCreateModelView, InstanceModelView
 from djangorestframework.mixins import PaginatorMixin
 from djangorestframework.status import HTTP_400_BAD_REQUEST
 from djangorestframework.response import ErrorResponse
-from djangorestframework.renderers import JSONRenderer, DocumentingHTMLRenderer
+from djangorestframework import renderers
+
+from forms import MovePageForm, MovePageContentItemForm
 
 from fiber.models import Page, PageContentItem
-from .forms import MovePageForm, MovePageContentItemForm
-from fiber.app_settings import API_RENDER_HTML
-
-API_RENDERERS = (JSONRenderer, )
-if API_RENDER_HTML:
-    API_RENDERERS = (JSONRenderer, DocumentingHTMLRenderer)
 
 
 class ApiRoot(View):
@@ -24,7 +20,7 @@ class ApiRoot(View):
     """
 
     permissions = (IsAuthenticated, )
-    renderers = API_RENDERERS
+    renderers = (renderers.JSONRenderer, )
 
     def get(self, request):
         return [
@@ -39,7 +35,7 @@ class ApiRoot(View):
 class ListView(ListOrCreateModelView):
 
     permissions = (IsAuthenticated, )
-    renderers = API_RENDERERS
+    renderers = (renderers.JSONRenderer, )
 
 
 class TreeListView(View):
@@ -111,13 +107,13 @@ class ImageListView(PaginatedListView):
 class InstanceView(InstanceModelView):
 
     permissions = (IsAuthenticated, )
-    renderers = API_RENDERERS
+    renderers = (renderers.JSONRenderer, )
 
 
 class MovePageView(View):
 
     permissions = (IsAuthenticated, )
-    renderers = API_RENDERERS
+    renderers = (renderers.JSONRenderer, )
 
     form = MovePageForm
 
@@ -134,7 +130,7 @@ class MovePageView(View):
 class MovePageContentItemView(View):
 
     permissions = (IsAuthenticated, )
-    renderers = API_RENDERERS
+    renderers = (renderers.JSONRenderer, )
 
     form = MovePageContentItemForm
 

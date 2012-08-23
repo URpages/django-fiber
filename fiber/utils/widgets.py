@@ -1,8 +1,7 @@
-from warnings import warn
-
 from django import forms
 from django.utils import simplejson as json
 from django.utils.safestring import mark_safe
+from warnings import warn
 
 
 class FiberTextarea(forms.Textarea):
@@ -46,7 +45,7 @@ class JSONWidget(forms.Textarea):
             path = self.prefill_from
             try:
                 l = path.rfind('.')
-                parent, child = path[:l], path[l + 1:]
+                parent, child = path[:l], path[l+1:]
                 base = __import__(parent, globals(), globals(), [child])
                 dynamic_class = getattr(base, child, None)
                 all_keys = []

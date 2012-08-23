@@ -8,16 +8,16 @@ from django.utils.html import strip_tags
 from django.utils import simplejson
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.sites.models import Site
 
 from mptt.managers import TreeManager
 from mptt.models import MPTTModel
 
-from .app_settings import IMAGES_DIR, FILES_DIR, METADATA_PAGE_SCHEMA, METADATA_CONTENT_SCHEMA, \
-    PAGE_MANAGER, CONTENT_ITEM_MANAGER
-from .utils.class_loader import load_class
-from .utils.fields import FiberURLField, FiberMarkupField, FiberHTMLField
-from .utils.json import JSONField
-from .utils.urls import get_named_url_from_quoted_url, is_quoted_url
+from app_settings import IMAGES_DIR, FILES_DIR, METADATA_PAGE_SCHEMA, METADATA_CONTENT_SCHEMA
+import managers
+from utils.fields import FiberURLField, FiberMarkupField, FiberHTMLField
+from utils.json import JSONField
+from utils.urls import get_named_url_from_quoted_url, is_quoted_url
 
 
 class ContentItem(models.Model):
@@ -31,7 +31,7 @@ class ContentItem(models.Model):
     template_name = models.CharField(_('template name'), blank=True, max_length=70)
     used_on_pages_data = JSONField(_('used on pages'), blank=True, null=True)
 
-    objects = load_class(CONTENT_ITEM_MANAGER)
+    objects = managers.ContentItemManager()
 
     class Meta:
         verbose_name = _('content item')
@@ -89,8 +89,9 @@ class Page(MPTTModel):
     content_items = models.ManyToManyField(ContentItem, through='PageContentItem', verbose_name=_('content items'))
     metadata = JSONField(blank=True, null=True, schema=METADATA_PAGE_SCHEMA, prefill_from='fiber.models.Page')
 
+    site = models.ForeignKey(Site)
     tree = TreeManager()
-    objects = load_class(PAGE_MANAGER)
+    objects = managers.PageManager()
 
     class Meta:
         verbose_name = _('page')
@@ -114,22 +115,21 @@ class Page(MPTTModel):
                 ContentItem.objects.rename_url(old_url, new_url)
 
     def get_absolute_url(self):
-        if self.url == '':
-            return ''
-        if self.url.startswith('/'):
-            return self.url
-        elif self.url.startswith('http://') or self.url.startswith('https://'):
-            return self.url
-        else:
-            # check if it's a named url
-            if is_quoted_url(self.url):
-                return get_named_url_from_quoted_url(self.url)
+        output = '  '
+        if not self.url == '':
+            if self.url.startswith('/'):
+                output = self.url
+            elif self.url.startswith('http://') or self.url.startswith('https://'):
+                return self.url
             else:
-                # relative url
-                if self.parent:
-                    return '%s/%s/' % (self.parent.get_absolute_url().rstrip('/'), self.url.strip('/'))
+                # check if it's a named url
+                if is_quoted_url(self.url):
+                    output = get_named_url_from_quoted_url(self.url)
                 else:
-                    return ''  # TODO: make sure this can never happen (in model.save()?)
+                    # relative url
+                    if self.parent:
+                        output = '%s/%s/' % (self.parent.get_absolute_url().rstrip('/'), self.url.strip('/'))
+        return output
 
     @classmethod
     def get_add_url(cls):
@@ -285,6 +285,7 @@ class Image(models.Model):
     title = models.CharField(_('title'), max_length=255)
     width = models.IntegerField(_('width'), blank=True, null=True)
     height = models.IntegerField(_('height'), blank=True, null=True)
+    site = models.ForeignKey(Site)
 
     class Meta:
         verbose_name = _('image')
@@ -295,11 +296,6 @@ class Image(models.Model):
         return self.image.name
 
     def save(self, *args, **kwargs):
-        # delete existing Image(s) with the same image.name - TODO: warn about this?
-        existing_images = Image.objects.filter(image=os.path.join(IMAGES_DIR, self.image.name))
-        for existing_image in existing_images:
-            existing_image.delete()
-
         self.get_image_information()
         super(Image, self).save(*args, **kwargs)
 
@@ -316,6 +312,7 @@ class File(models.Model):
     updated = models.DateTimeField(_('updated'), auto_now=True)
     file = models.FileField(_('file'), upload_to=FILES_DIR, max_length=255)
     title = models.CharField(_('title'), max_length=255)
+    site = models.ForeignKey(Site)
 
     class Meta:
         verbose_name = _('file')
@@ -324,14 +321,6 @@ class File(models.Model):
 
     def __unicode__(self):
         return self.file.name
-
-    def save(self, *args, **kwargs):
-        # delete existing File(s) with the same file.name - TODO: warn about this?
-        existing_files = File.objects.filter(file=os.path.join(FILES_DIR, self.file.name))
-        for existing_file in existing_files:
-            existing_file.delete()
-
-        super(File, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         os.remove(os.path.join(settings.MEDIA_ROOT, str(self.file)))

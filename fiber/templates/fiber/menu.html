@@ -1,4 +1,4 @@
-{% load mptt_tags fiber_tags %}
+{% load mptt_tags fiber_tags %}{% spaceless %}
 {% if user.is_staff %}
 	{% if fiber_menu_parent_page %}
 	<ul data-fiber-data='{"type": "page", "add_url": "{{ Page.get_add_url }}", "parent_id": {{ fiber_menu_parent_page.id }}}'>
@@ -30,3 +30,4 @@
 	{% endrecursetree %}
 	</ul>
 {% endif %}
+{% endspaceless %}

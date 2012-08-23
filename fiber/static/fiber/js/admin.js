@@ -780,8 +780,7 @@ Fiber.ImageSelectDialog = BaseFileSelectDialog.extend({
 
 		function thumbnail_formatter(value, row_data) {
 			// insert the url that ckeditor looks for. Use HTML5 data attribute instead?
-			// TODO: use image checksum for cache busting?
-			return '<span style="display: none;">' + row_data.image_url + '</span>' + '<img src="' + row_data.image_url + '?_c=' + encodeURIComponent(row_data.url) + '" title="' + row_data.title + '"/>';
+			return '<span style="display: none;">' + row_data.image_url + '</span>' + '<img src="' + row_data.image_url + '" title="' + row_data.title + '"/>';
 		}
 
 		this.select_grid.simple_datagrid({
@@ -1882,7 +1881,7 @@ Fiber.FiberItem = Class.extend({
 		// set minimum height of (possibly empty) containers
 		// TODO: also do this for menus?
 		if (this.element_data.type == 'content_item' && !this.parent) {
-			this.$element.css('min-height', '20px');
+			this.$element.toggleClass('fiber-placeholder');
 		}
 
 		this.attach_events();

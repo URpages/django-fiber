@@ -1,7 +1,5 @@
-from datetime import datetime
-
 from django.utils.translation import ugettext_lazy as _
-
+from datetime import datetime
 
 try:
     # For Django 1.4, django.utils.timezone exists, and we need to handle

@@ -1,61 +1,27 @@
-from django.conf import settings
 from django.contrib import admin
-from django.contrib.admin.util import model_ngettext
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from mptt.admin import MPTTModelAdmin
 
-from . import admin_forms as forms
-from . import fiber_admin
-from .app_settings import TEMPLATE_CHOICES, CONTENT_TEMPLATE_CHOICES
-from .editor import get_editor_field_name
-from .models import Page, ContentItem, PageContentItem, Image, File
+from fiber.editor import get_editor_field_name
+from app_settings import TEMPLATE_CHOICES, CONTENT_TEMPLATE_CHOICES
+from models import Page, ContentItem, PageContentItem, Image, File
+import admin_forms as forms
+
+import fiber_admin
 
 
 class FileAdmin(admin.ModelAdmin):
     list_display = ('title', '__unicode__')
     date_hierarchy = 'updated'
     search_fields = ('title', )
-    actions = ['really_delete_selected']
-
-    def get_actions(self, request):
-        actions = super(FileAdmin, self).get_actions(request)
-        del actions['delete_selected']  # the original delete selected action doesn't remove associated files, because .delete() is never called
-        return actions
-
-    def really_delete_selected(self, request, queryset):
-        for obj in queryset:
-            obj.delete()
-
-        n = queryset.count()
-        self.message_user(request, _("Successfully deleted %(count)d %(items)s.") % {
-            "count": n, "items": model_ngettext(self.opts, n)
-        })
-
-    really_delete_selected.short_description = _('Delete selected files')
 
 
 class ImageAdmin(admin.ModelAdmin):
     list_display = ('title', '__unicode__')
     date_hierarchy = 'updated'
     search_fields = ('title', )
-    actions = ['really_delete_selected']
-
-    def get_actions(self, request):
-        actions = super(ImageAdmin, self).get_actions(request)
-        del actions['delete_selected']  # the original delete selected action doesn't remove associated files, because .delete() is never called
-        return actions
-
-    def really_delete_selected(self, request, queryset):
-        for obj in queryset:
-            obj.delete()
-
-        n = queryset.count()
-        self.message_user(request, _("Successfully deleted %(count)d %(items)s.") % {
-            "count": n, "items": model_ngettext(self.opts, n)
-        })
-
-    really_delete_selected.short_description = _('Delete selected images')
 
 
 class ContentItemAdmin(admin.ModelAdmin):
@@ -80,14 +46,14 @@ class PageAdmin(MPTTModelAdmin):
     form = forms.PageForm
     fieldsets = (
         (None, {'fields': ('parent', 'title', 'url', 'redirect_page', 'template_name')}),
-        (_('Advanced options'), {'classes': ('collapse',), 'fields': ('mark_current_regexes', 'show_in_menu', 'is_public', 'protected',)}),
+        (_('Advanced options'), {'classes': ('collapse',), 'fields': ('site', 'mark_current_regexes', 'show_in_menu', 'is_public', 'protected',)}),
         (_('Metadata'), {'classes': ('collapse',), 'fields': ('metadata',)}),
     )
 
     inlines = (PageContentItemInline,)
-    list_display = ('title', 'view_on_site', 'url', 'redirect_page', 'get_absolute_url', 'action_links')
+    list_display = ('title', 'view_on_site', 'url', 'redirect_page','get_absolute_url', 'action_links',)
     list_per_page = 1000
-    search_fields = ('title', 'url', 'redirect_page__title')
+    search_fields = ('title', 'url', 'redirect_page')
 
     def view_on_site(self, page):
         view_on_site = ''
