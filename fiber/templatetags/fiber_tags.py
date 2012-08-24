@@ -11,12 +11,16 @@ register = template.Library()
 
 
 def show_menu(context, menu_name, min_level, max_level, expand=None):
-
+    request = context.get('request', None)
     menu_pages = []
     needed_pages = []
 
     try:
-        root_page = Page.objects.get(title=menu_name, parent=None)
+        if request:
+            root_page = Page.objects.get(title=menu_name, parent=None, site=request.Site)
+        else:
+            root_page = Page.objects.get(title=menu_name, parent=None)
+
     except Page.DoesNotExist:
         raise Page.DoesNotExist("Menu does not exist.\nNo top-level page found with the title '%s'." % menu_name)
 
